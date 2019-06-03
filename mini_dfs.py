@@ -59,61 +59,61 @@ def process_cmd(cmd):
     if len(cmds) >= 1 and cmds[0] in operation_names:
         if cmds[0] == operation_names[0]:
             if len(cmds) != 2:
-                print 'Usage: put source_file_path'
+                print('Usage: put source_file_path')
             else:
                 if not os.path.isfile(cmds[1]):
-                    print 'Error: input file does not exist'
+                    print ('Error: input file does not exist')
                 else:
                     global_file_path = cmds[1]
                     global_cmd_type = OPERATION.put
                     flag = True
         elif cmds[0] == operation_names[1]:
             if len(cmds) != 4:
-                print 'Usage: read file_id offset count'
+                print('Usage: read file_id offset count')
             else:
                 try:
                     global_file_id = int(cmds[1])
                     global_read_offset = int(cmds[2])
                     global_read_count = int(cmds[3])
                 except ValueError:
-                    print 'Error: fileid, offset, count should be integer'
+                    print ('Error: fileid, offset, count should be integer')
                 else:
                     global_cmd_type = OPERATION.read
                     flag = True
         elif cmds[0] == operation_names[2]:
             if len(cmds) != 3:
-                print 'Usage: fetch file_id save_path'
+                print ('Usage: fetch file_id save_path')
             else:
                 global_fetch_savepath = cmds[2]
                 if not os.path.exists(os.path.split(global_fetch_savepath)[0]):
-                    print 'Error: input save_path does not exist'
+                    print ('Error: input save_path does not exist')
                 else:
                     try:
                         global_file_id = int(cmds[1])
                     except ValueError:
-                        print 'Error: fileid should be integer'
+                        print ('Error: fileid should be integer')
                     else:
                         global_cmd_type = OPERATION.fetch
                         flag = True
         elif cmds[0] == operation_names[3]:
             if len(cmds) != 1:
-                print 'Usage: quit'
+                print ('Usage: quit')
             else:
                 start_stop_info('Stop')
-                print "Bye: Exiting miniDFS..."
+                print ("Bye: Exiting miniDFS...")
                 os._exit(0)
                 flag = True
                 global_cmd_type = OPERATION.quit
         elif cmds[0] == operation_names[4]:
             if len(cmds) != 1:
-                print 'Usage: ls'
+                print ('Usage: ls')
             else:
                 flag = True
                 global_cmd_type = OPERATION.ls
         else:
             pass
     else:
-        print 'Usage: put|read|fetch|quit|ls'
+        print ('Usage: put|read|fetch|quit|ls')
 
     return flag
 
@@ -187,9 +187,9 @@ class NameNode(threading.Thread):
         """
         ls命令，打印meta data信息
         """
-        print 'total', len(self.id_file_map)
+        print ('total', len(self.id_file_map))
         for file_id, (file_name, file_len) in self.id_file_map.items():
-            print LS_PATTERN % (file_id, file_name, file_len)
+            print (LS_PATTERN % (file_id, file_name, file_len))
         ls_event.set()
 
     def generate_split(self):
@@ -244,17 +244,17 @@ class NameNode(threading.Thread):
         read_count = global_read_count
 
         if file_id not in self.id_file_map:
-            print 'No such file with id =', file_id
+            print ('No such file with id =', file_id)
             read_event.set()
         elif (read_offset + read_count) > self.id_file_map[file_id][1]:
-            print 'The expected reading exceeds the file, file size:', self.id_file_map[file_id][1]
+            print ('The expected reading exceeds the file, file size:', self.id_file_map[file_id][1])
             read_event.set()
         else:
             start_block = int(math.floor(read_offset / BLOCK_SIZE))
             space_left_in_block = (start_block + 1) * BLOCK_SIZE - read_offset
 
             if space_left_in_block < read_count:
-                print 'Cannot read across blocks'
+                print ('Cannot read across blocks')
                 read_event.set()
             else:
                 # 从存储数据的block中随机选择一个data server，进行数据读取
@@ -275,7 +275,7 @@ class NameNode(threading.Thread):
         file_id = global_file_id
 
         if file_id not in self.id_file_map:
-            print 'No such file with id =', file_id
+            print ('No such file with id =', file_id)
         else:
             file_blocks = self.id_block_map[file_id]
             global_fetch_blocks = len(file_blocks)
@@ -342,7 +342,7 @@ class DataNode(threading.Thread):
         with open(read_path, 'r') as f_in:
             f_in.seek(global_read_offset)
             content = f_in.read(global_read_count)
-            print content
+            print (content)
         read_event.set()
 
 
@@ -364,9 +364,9 @@ def run():
 
     global global_cmd_type, global_cmd_flag, global_file_id
     cmd_prompt = 'MiniDFS > '
-    print cmd_prompt,
+    print (cmd_prompt,)
     while True:
-        cmd_str = raw_input()
+        cmd_str = input()
         global_cmd_flag = process_cmd(cmd_str)
 
         if global_cmd_flag:
@@ -378,7 +378,7 @@ def run():
             if global_cmd_type == OPERATION.put:
                 for i in range(NUM_DATA_SERVER):
                     main_events[i].wait()
-                print 'Put succeed! File ID is %d' % (global_file_id,)
+                print ('Put succeed! File ID is %d' % (global_file_id,))
                 global_server_block_map.clear()
                 for i in range(NUM_DATA_SERVER):
                     main_events[i].clear()
@@ -400,18 +400,18 @@ def run():
                     f_fetch.write(block_file.read())
                     block_file.close()
                 f_fetch.close()
-                print 'Finished download!'
+                print ('Finished download!')
                 for i in range(NUM_DATA_SERVER):
                     main_events[i].clear()
             else:
                 pass
-        print cmd_prompt,
+        print (cmd_prompt,)
 
 
 def start_stop_info(operation):
-    print operation, 'NameNode'
+    print (operation, 'NameNode')
     for i in range(NUM_DATA_SERVER):
-        print operation, 'DataNode' + str(i)
+        print (operation, 'DataNode' + str(i))
 
 
 if __name__ == '__main__':
